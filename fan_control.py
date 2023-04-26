@@ -81,19 +81,20 @@ def pwm_turn_off() -> None:
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/enable", "w+") as enable_f:
         enable_f.write("0")
 
+def get_cpu_max_temp() -> int:
+    cpu_temp = []
+    for i in range(0, 4):
+        with open(f"/sys/class/thermal/thermal_zone{i}/temp", "r") as temp_f:
+            cpu_temp[i] = int(temp_f.readline())
+    return max(cpu_temp) / 1000
+
 if __name__ == 'fan_control.py':
     try:
         temp_step = (MAX_CPU_TEMP - MIN_CPU_TEMP) / 100
         pwm_turn_on()
 
         while True:
-            cpu_temp = []
-            # measures the temperature on each cpu
-            for i in range(0, 4):
-                with open(f"/sys/class/thermal/thermal_zone{i}/temp", "r") as temp_f:
-                    cpu_temp[i] = int(temp_f.readline())
-            
-            cpu_temp = max(cpu_temp) / 1000
+            cpu_temp = get_cpu_max_temp()
 
             if cpu_temp >= MAX_CPU_TEMP:
                 fan_power_percent = 100
