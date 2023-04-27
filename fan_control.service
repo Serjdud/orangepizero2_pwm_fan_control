@@ -1,0 +1,15 @@
+[Unit]
+Description = FAN control by PWM
+After = network.target
+ 
+[Service]
+Type = simple
+ExecStart = /home/orangepi/orangepizero2_pwm_fan_control/fan_control.sh 3
+User = root
+Group = root
+Restart = on-failure
+RestartSec = 5
+TimeoutSec=60
+ 
+[Install]
+WantedBy = multi-user.target
