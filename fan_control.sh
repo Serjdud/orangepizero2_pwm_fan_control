@@ -1,6 +1,9 @@
 #!/bin/bash
 
-if [[ "$1" > 4 ]] || [[ "$1" < 1 ]]; then
+if [[ "$1" == -h ]]; then
+  python3 ./fan_control.py -h
+  exit
+elif [[ "$1" > 4 ]] || [[ "$1" < 1 ]]; then
   echo "First argument is PWM number. It must be from 1 to 4."
   exit
 fi
