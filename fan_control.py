@@ -17,11 +17,11 @@ logger.setLevel(logging.INFO)
 
 # default values and arguments parsing
 parser = argparse.ArgumentParser(prog='Orange Pi Zero 2 fan control')
-parser.add_argument('-n', '--pwm_num',
+parser.add_argument('pwn_number',
                     default='3',
                     type=int,
                     choices=[1, 2, 3, 4],
-                    metavar="NUMBER",
+                    metavar="PWM_NUMBER",
                     help="Default %(default)s. One of 4 PWM. See orange pi zero 2 user manual.")
 parser.add_argument('-i', '--init_power',
                     default='0',
@@ -64,7 +64,7 @@ args = parser.parse_args()
 if args.verbose:
     logger.addHandler(log_handler)
 
-PWM_NUMBER = args.pwm_num
+PWM_NUMBER = args.pwn_number
 PWM_FREQ = args.pwm_freq
 PWM_FREQ_THRESHOLD = args.pwm_threshold
 INITIAL_FAN_POWER = args.init_power
@@ -93,13 +93,7 @@ def set_fan_power(power_percent: float) -> None:
     logger.info(f"PWM duty cycle is setted to {pwm_duty_cycle} Hz")
 
 def pwm_turn_on() -> None:
-    logger.info(f"PWM is turning on...")
-    try:
-        with open("/sys/class/pwm/pwmchip0/export", "w+") as export_f:
-            export_f.write(str(PWM_NUMBER))
-        logger.info(f"PWM number is setted to {PWM_NUMBER}.")
-    except OSError as err:
-        logger.warning(err)
+    logger.info(f"PWM {PWM_NUMBER} is turning on...")
     
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/period", "w+") as period_f:
         period_f.write(str(PWM_FREQ))
@@ -112,10 +106,9 @@ def pwm_turn_on() -> None:
     logger.info("PWM turned on.")
 
 def pwm_turn_off() -> None:
-    set_fan_power(0)
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/enable", "w+") as enable_f:
         enable_f.write("0")
-    logger.info("PWM turned off.")
+    logger.info(f"PWM {PWM_NUMBER} turned off.")
 
 def get_cpu_max_temp() -> int:
     cpu_temp = [0]*4
@@ -144,7 +137,8 @@ if __name__ == '__main__':
             set_fan_power(fan_power_percent)
             time.sleep(MEASUREMENT_FREQ)
             logger.info('='*50)
-    
+    except KeyboardInterrupt:
+        ...
     finally:
         pwm_turn_off()
         logger.info("Exit...")
