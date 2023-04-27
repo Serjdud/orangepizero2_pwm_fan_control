@@ -6,6 +6,15 @@ import time
 import sys
 import logging
 
+# setup logger
+log_handler = logging.StreamHandler(stream=sys.stdout)
+log_handler.setFormatter(logging.Formatter(fmt="%(asctime)s:%(levelname)s: %(message)s",
+                                           datefmt="%H:%M:%S"))
+log_handler.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
 # default values and arguments parsing
 parser = argparse.ArgumentParser(prog='Orange Pi Zero 2 fan control')
 parser.add_argument('-n', '--pwm_num',
@@ -44,7 +53,7 @@ parser.add_argument('--cycle_time',
                     default='10',
                     type=int,
                     metavar="CYCLE_TIME",
-                    choices=range(0, 300),
+                    choices=range(1, 300),
                     help="Default %(default)s s. How often (sec) temperature is measured and fan power is changed.")
 parser.add_argument('-v', '--verbose',
                     action='store_true',
@@ -52,9 +61,8 @@ parser.add_argument('-v', '--verbose',
 
 args = parser.parse_args()
 
-logging.basicConfig(format="%(levelname)s:%(message)s")
 if args.verbose:
-    logging.basicConfig(level=logging.INFO)
+    logger.addHandler(log_handler)
 
 PWM_NUMBER = args.pwm_num
 PWM_FREQ = args.pwm_freq
@@ -70,52 +78,51 @@ if MAX_CPU_TEMP <= MIN_CPU_TEMP:
 if PWM_FREQ_THRESHOLD >= PWM_FREQ:
     raise Exception("PWM frequency threshold must be <= pwm frequency")
 
-def set_fan_power(power_percent: int) -> None:
-    logging.info(f"FAN power = {power_percent}%.")
+def set_fan_power(power_percent: float) -> None:
+    logger.info(f"GET FAN power = {power_percent: .2f} %")
     if power_percent >= 100:
         pwm_duty_cycle = PWM_FREQ
     elif power_percent <= 0:
         pwm_duty_cycle = 0
     else:
-        pwm_duty_cycle = ((power_percent / 100) * (PWM_FREQ - PWM_FREQ_THRESHOLD)
+        pwm_duty_cycle = int((power_percent / 100) * (PWM_FREQ - PWM_FREQ_THRESHOLD)
                               + PWM_FREQ_THRESHOLD)
-    logging.info(f"PWM duty cycle = {pwm_duty_cycle} Hz")
+    logger.info(f"SET PWM duty cycle = {pwm_duty_cycle} Hz")
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/duty_cycle", "w+") as dcf:
             dcf.write(str(pwm_duty_cycle))
-    logging.info(f"PWM duty cycle is setted to {pwm_duty_cycle} Hz")
+    logger.info(f"PWM duty cycle is setted to {pwm_duty_cycle} Hz")
 
 def pwm_turn_on() -> None:
-    logging.info(f"trying to turn on pwm")
+    logger.info(f"PWM is turning on...")
     try:
         with open("/sys/class/pwm/pwmchip0/export", "w+") as export_f:
             export_f.write(str(PWM_NUMBER))
-        logging.info(f"PWM number is setted {PWM_NUMBER}.")
+        logger.info(f"PWM number is setted to {PWM_NUMBER}.")
     except OSError as err:
-        logging.warning("OS Error!")
-        logging.warning(err)
+        logger.warning(err)
     
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/period", "w+") as period_f:
         period_f.write(str(PWM_FREQ))
-    logging.info(f"PWM frequency is settet to {PWM_FREQ} Hz.")
+    logger.info(f"PWM frequency is setted to {PWM_FREQ} Hz.")
 
     set_fan_power(INITIAL_FAN_POWER)
 
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/enable", "w+") as enable_f:
         enable_f.write("1")
-    logging.info("PWM turned on.")
+    logger.info("PWM turned on.")
 
 def pwm_turn_off() -> None:
     set_fan_power(0)
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/enable", "w+") as enable_f:
         enable_f.write("0")
-    logging.info("PWM turned off.")
+    logger.info("PWM turned off.")
 
 def get_cpu_max_temp() -> int:
     cpu_temp = [0]*4
     for i in range(0, 4):
         with open(f"/sys/class/thermal/thermal_zone{i}/temp", "r") as temp_f:
             cpu_temp[i] = int(temp_f.readline())
-        logging.info(f"Raw cpu temp values: {cpu_temp}")
+    logger.info(f"GET CPU raw temp: {cpu_temp}")
     return max(cpu_temp) / 1000
 
 if __name__ == '__main__':
@@ -125,7 +132,7 @@ if __name__ == '__main__':
 
         while True:
             cpu_temp = get_cpu_max_temp()
-            logging.info(f"CPU max temperature = {cpu_temp} ")
+            logger.info(f"GET CPU max temperature = {cpu_temp: .2f} °C")
 
             if cpu_temp >= MAX_CPU_TEMP:
                 fan_power_percent = 100
@@ -134,11 +141,10 @@ if __name__ == '__main__':
             else:
                 fan_power_percent = ((cpu_temp - MIN_CPU_TEMP) / (MAX_CPU_TEMP - MIN_CPU_TEMP)) * 100
             
-            logging.info(f" FAN power = {fan_power_percent}%")
             set_fan_power(fan_power_percent)
             time.sleep(MEASUREMENT_FREQ)
+            logger.info('='*50)
     
-    except KeyboardInterrupt:
+    finally:
         pwm_turn_off()
-        logging.info("Exit...")
-        sys.exit()
+        logger.info("Exit...")
