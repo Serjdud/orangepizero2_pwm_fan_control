@@ -1,5 +1,5 @@
 # Orangepi Zero 2 PWM FAN control
-How to control a PWM fan depending on CPU temperature on a Orange Pi Zero 2? You can use one of four build in PWM.
+How to control a PWM fan depending on CPU temperature on a Orange Pi Zero 2? You can use one of four built-in PWM.
 You don't need any libraries, only python.
 
 ![OrangePi Zero2 fan](https://github.com/Serjdud/orangepizero2_pwm_fan_control/blob/main/img/pins.jpg)
