@@ -7,7 +7,7 @@ How to control a PWM fan depending on CPU temperature on a Orange Pi Zero 2.
 ```
 sudo nano /boot/orangepiEnv.txt
 ```
-Add to the end of file pwm12 or pwm34.
+Add to the end of file ```pwm12``` or ```pwm34```.
 ```
 overlays=pwm34
 ```
@@ -26,15 +26,15 @@ git clone https://github.com/Serjdud/orangepizero2_pwm_fan_control.git
 sudo chmod +x ./fan_control.sh
 ```
 ## Running
-Run fan_control.sh with first argument = PWN nubmer. Wich pwm number you use depends on PWM pin. See picture above.
+Run fan_control.sh with first argument = PWN nubmer. Wich PWM number you use depends on PWM pin. See picture above.
 ```
 sudo ./fan_control.sh 3
 ```
-To see other possible arguments run
+To see other possible arguments run with -h argument
 ```
 ./fan_control.sh -h
 ```
-## Autolaunch on system start
+## Autolaunch on system startup
 1. Move to source (for example ```orangepizero2_pwm_fan_control``` installed to orangepi user's home directory)
 ```
 cd ~/orangepizero2_pwm_fan_control
@@ -44,11 +44,14 @@ cd ~/orangepizero2_pwm_fan_control
 pwd
 ```
 > /home/orangepi/orangepizero2_pwm_fan_control
-3. Copy the full path to the parameter ExecStart in fan_control.service and add PWM number argument.
+3. Copy the full path to the parameter ExecStart in ```fan_control.service``` and add PWM number argument.
+```
+sudo nano ./fan_control.service
+```
 ```
 ExecStart = /home/orangepi/orangepizero2_pwm_fan_control/fan_control.sh 3
 ```
-4. Copy fan_control.service to  daemon service folder (usually ```/etc/systemd/system/```).
+4. Copy fan_control.service to daemon service folder (usually ```/etc/systemd/system/```).
 ```
 sudo cp ./fan_control.service /etc/systemd/system/
 ```
@@ -56,7 +59,7 @@ sudo cp ./fan_control.service /etc/systemd/system/
 ```
 sudo systemctl daemon-reload
 ```
-6. Enable service autolaunch on system start
+6. Enable service autolaunch on system startup
 ```
 sudo systemctl enable fan_control.service
 ```
