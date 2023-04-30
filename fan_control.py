@@ -38,7 +38,7 @@ parser.add_argument('-t', '--pwm_threshold',
                     type=int,
                     help="Default %(default)s Hz. Minimal frequency (Hz) when fan start to rotate.")
 parser.add_argument('--min_temp',
-                    default='40',
+                    default='42',
                     type=int,
                     metavar="MIN_TEMP",
                     choices=range(0, 100),
