@@ -4,6 +4,7 @@ You don't need any libraries, only python.
 
 ![OrangePi Zero2 fan](https://github.com/Serjdud/orangepizero2_pwm_fan_control/blob/main/img/pins.jpg)
 
+TODO: rewrite python script to bash.
 ## Prepare
 1. Install [Python 3.7](https://www.python.org/) or higher.
 2. Configure PWM on orangepi zero2. See section 3.20.5 in [user manual](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-Zero-2.html)
