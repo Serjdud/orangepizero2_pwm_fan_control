@@ -70,5 +70,5 @@ sudo systemctl enable fan_control.service
 7. Start service end check
 ```
 sudo systemctl start fan_control.service
-systemctl start fan_control.service
+systemctl status fan_control.service
 ```
