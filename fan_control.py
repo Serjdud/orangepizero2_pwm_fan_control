@@ -34,11 +34,11 @@ parser.add_argument('-f', '--pwm_freq',
                     type=int,
                     help="Default %(default)s Hz. PWM frequency [Hz].")
 parser.add_argument('-t', '--pwm_threshold',
-                    default='350',
+                    default='380',
                     type=int,
-                    help="Default %(default)s Hz. Minimal frequency (Hz) when fan start to rotate.")
+                    help="Default %(default)s Hz. Minimal frequency [Hz] when fan start to rotate.")
 parser.add_argument('--min_temp',
-                    default='42',
+                    default='45',
                     type=int,
                     metavar="MIN_TEMP",
                     choices=range(0, 100),
@@ -50,11 +50,11 @@ parser.add_argument('--max_temp',
                     choices=range(0, 100),
                     help="Default %(default)s °C. Above this temp [°C] fan is 100 %% power.")
 parser.add_argument('--cycle_time',
-                    default='10',
+                    default='5',
                     type=int,
                     metavar="CYCLE_TIME",
                     choices=range(1, 300),
-                    help="Default %(default)s s. How often (sec) temperature is measured and fan power is changed.")
+                    help="Default %(default)s s. How often [sec] temperature is measured and fan power is changed.")
 parser.add_argument('-v', '--verbose',
                     action='store_true',
                     help="Enable verbose mode.")
@@ -91,6 +91,13 @@ def set_fan_power(power_percent: float) -> None:
     with open(f"/sys/class/pwm/pwmchip0/pwm{PWM_NUMBER}/duty_cycle", "w+") as dcf:
             dcf.write(str(pwm_duty_cycle))
     logger.info(f"PWM duty cycle is setted to {pwm_duty_cycle} Hz")
+    
+def process_fan_power(cpu_temp: float) -> float:
+    if cpu_temp >= MAX_CPU_TEMP:
+        return 100
+    elif cpu_temp <= MIN_CPU_TEMP:
+        return 0
+    return ((cpu_temp - MIN_CPU_TEMP) / (MAX_CPU_TEMP - MIN_CPU_TEMP)) * 100
 
 def pwm_turn_on() -> None:
     logger.info(f"PWM {PWM_NUMBER} is turning on...")
@@ -110,7 +117,7 @@ def pwm_turn_off() -> None:
         enable_f.write("0")
     logger.info(f"PWM {PWM_NUMBER} turned off.")
 
-def get_cpu_max_temp() -> int:
+def get_cpu_max_temp() -> float:
     cpu_temp = [0]*4
     for i in range(0, 4):
         with open(f"/sys/class/thermal/thermal_zone{i}/temp", "r") as temp_f:
@@ -126,14 +133,7 @@ if __name__ == '__main__':
         while True:
             cpu_temp = get_cpu_max_temp()
             logger.info(f"GET CPU max temperature = {cpu_temp: .2f} °C")
-
-            if cpu_temp >= MAX_CPU_TEMP:
-                fan_power_percent = 100
-            elif cpu_temp <= MIN_CPU_TEMP:
-                fan_power_percent = 0
-            else:
-                fan_power_percent = ((cpu_temp - MIN_CPU_TEMP) / (MAX_CPU_TEMP - MIN_CPU_TEMP)) * 100
-            
+            fan_power_percent = process_fan_power(cpu_temp)
             set_fan_power(fan_power_percent)
             time.sleep(MEASUREMENT_FREQ)
             logger.info('='*50)
